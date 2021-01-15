@@ -1,6 +1,7 @@
 package bencode
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"reflect"
@@ -8,6 +9,16 @@ import (
 )
 
 var bytesType = reflect.TypeOf([]byte{})
+
+// Encode encode data
+func Encode(data interface{}) ([]byte, error) {
+	var buf bytes.Buffer
+	err := NewEncoder(&buf).Encode(data)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
 
 func encode(buf io.Writer, v reflect.Value) error {
 	switch v.Kind() {
