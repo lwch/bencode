@@ -136,9 +136,57 @@ func TestEncodeInterface(t *testing.T) {
 	intf = 1
 	data, err := Encode(intf)
 	if err != nil {
-		t.Fatalf("FATAL: encode interface: %v", err)
+		t.Fatalf("FATAL: encode interface int: %v", err)
 	}
 	if bytes.Compare(data, []byte("i1e")) != 0 {
 		t.Fatalf("unexpected value: %s", string(data))
+	}
+
+	type common struct {
+		Transaction string `bencode:"t"`
+		Type        string `bencode:"y"`
+	}
+	type query struct {
+		Action string      `bencode:"q"`
+		Data   interface{} `bencode:"a"`
+	}
+	type pingRequest struct {
+		common
+		query
+	}
+	var s pingRequest
+	s.common = common{
+		Transaction: "aa",
+		Type:        "q",
+	}
+	var id [20]byte
+	copy(id[:], "abcdefghij0123456789")
+	s.query = query{
+		Action: "ping",
+		Data: map[string][20]byte{
+			"id": id,
+		},
+	}
+	data, err = Encode(s)
+	if err != nil {
+		t.Fatalf("FATAL: encode interface map: %v", err)
+	}
+	if data[0] != 'd' {
+		t.Fatalf("unexpected first char: %c", data[0])
+	}
+	if data[len(data)-1] != 'e' {
+		t.Fatalf("unexpected end char: %c", data[len(data)-1])
+	}
+	if !bytes.Contains(data, []byte("1:ad2:id20:abcdefghij0123456789e")) {
+		t.Fatal("value of key a not found")
+	}
+	if !bytes.Contains(data, []byte("1:q4:ping")) {
+		t.Fatal("value of key q not found")
+	}
+	if !bytes.Contains(data, []byte("1:t2:aa")) {
+		t.Fatal("value of key t not found")
+	}
+	if !bytes.Contains(data, []byte("1:y1:q")) {
+		t.Fatal("value of key y not found")
 	}
 }

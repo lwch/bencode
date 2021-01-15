@@ -78,6 +78,8 @@ func encode(buf io.Writer, v reflect.Value) error {
 		}
 		_, err = buf.Write(data)
 		return err
+	case reflect.Interface:
+		return encode(buf, v.Elem())
 	case reflect.Map:
 		_, err := buf.Write([]byte("d"))
 		if err != nil {
@@ -89,7 +91,7 @@ func encode(buf io.Writer, v reflect.Value) error {
 			if err != nil {
 				return err
 			}
-			err = encode(buf, it.Value().Elem())
+			err = encode(buf, it.Value())
 			if err != nil {
 				return err
 			}
