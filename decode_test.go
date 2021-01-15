@@ -2,8 +2,6 @@ package bencode
 
 import (
 	"bytes"
-	"encoding/hex"
-	"fmt"
 	"testing"
 )
 
@@ -45,7 +43,7 @@ func TestDecodeInherit(t *testing.T) {
 		common
 		Response struct {
 			ID [20]byte `bencode:"id"`
-		} `bencode:"a"`
+		} `bencode:"r"`
 	}
 	var r pingResponse
 	data := []byte{
@@ -57,9 +55,24 @@ func TestDecodeInherit(t *testing.T) {
 		0x36, 0x32, 0x37, 0x31, 0x3a, 0x76, 0x34, 0x3a, 0x4c, 0x54, 0x00, 0x11, 0x31, 0x3a, 0x79, 0x31,
 		0x3a, 0x72, 0x65,
 	}
-	fmt.Println(hex.Dump(data))
 	err := Decode(data, &r)
 	if err != nil {
 		t.Fatalf("FATAL: decode inherit: %v", err)
+	}
+	if r.Transaction != "210115eedc8ba657caa26bedc40d7627" {
+		t.Fatalf("unexpected value of t: %s", r.Transaction)
+	}
+	if r.Type != "r" {
+		t.Fatalf("unexpected value of y: %s", r.Type)
+	}
+	id := []byte{
+		0xeb, 0xff, 0x36, 0x69,
+		0x73, 0x51, 0xff, 0x4a,
+		0xec, 0x29, 0xcd, 0xba,
+		0xab, 0xf2, 0xfb, 0xe3,
+		0x46, 0x7c, 0xc2, 0x67,
+	}
+	if bytes.Compare(r.Response.ID[:], id) != 0 {
+		t.Fatalf("unexpected value of r.id: %s", string(r.Response.ID[:]))
 	}
 }
