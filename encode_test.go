@@ -21,7 +21,7 @@ func TestEncode(t *testing.T) {
 	copy(obj.A.ID[:], []byte("abcdefghij0123456789"))
 	data, err := Encode(obj)
 	if err != nil {
-		t.Fatalf("FATAL: encode %v", err)
+		t.Fatalf("FATAL: encode: %v", err)
 	}
 	if data[0] != 'd' {
 		t.Fatalf("unexpected first char: %c", data[0])
