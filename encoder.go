@@ -89,7 +89,7 @@ func encode(buf io.Writer, v reflect.Value) error {
 			if err != nil {
 				return err
 			}
-			err = encode(buf, it.Value())
+			err = encode(buf, it.Value().Elem())
 			if err != nil {
 				return err
 			}
