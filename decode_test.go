@@ -7,7 +7,7 @@ import (
 
 func TestDecode(t *testing.T) {
 	// example of http://www.bittorrent.org/beps/bep_0005.html
-	str := "d1:ad2:id20:abcdefghij0123456789e1:q4:ping1:t2:aa1:y1:qe"
+	str := []byte("d1:ad2:id20:abcdefghij0123456789e1:q4:ping1:t2:aa1:y1:qe")
 	var obj struct {
 		T string `bencode:"t"`
 		Y string `bencode:"y"`

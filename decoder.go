@@ -2,6 +2,7 @@ package bencode
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -15,7 +16,7 @@ type Decoder struct {
 	r io.Reader
 }
 
-// NewDecoder create decoder
+// NewDecoder create decoder from io.Reader
 func NewDecoder(r io.Reader) Decoder {
 	return Decoder{r}
 }
@@ -25,9 +26,9 @@ func (dec Decoder) Decode(data interface{}) error {
 	return decode(bufio.NewReader(dec.r), reflect.ValueOf(data))
 }
 
-// Decode decode data
-func Decode(data string, value interface{}) error {
-	return NewDecoder(strings.NewReader(data)).Decode(value)
+// Decode decode data in raw
+func Decode(data []byte, value interface{}) error {
+	return NewDecoder(bytes.NewReader(data)).Decode(value)
 }
 
 func decode(r *bufio.Reader, v reflect.Value) error {

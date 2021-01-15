@@ -15,7 +15,7 @@ type Encoder struct {
 
 var bytesType = reflect.TypeOf([]byte{})
 
-// NewEncoder create encoder
+// NewEncoder create encoder to io.Writer
 func NewEncoder(w io.Writer) Encoder {
 	return Encoder{w}
 }
@@ -25,7 +25,7 @@ func (enc Encoder) Encode(data interface{}) error {
 	return encode(enc.w, reflect.ValueOf(data))
 }
 
-// Encode encode data
+// Encode encode data in raw
 func Encode(data interface{}) ([]byte, error) {
 	var buf bytes.Buffer
 	err := NewEncoder(&buf).Encode(data)
