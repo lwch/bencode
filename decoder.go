@@ -13,12 +13,13 @@ import (
 
 // Decoder bencode decoder
 type Decoder struct {
-	r io.Reader
+	ch [1]byte
+	r  io.Reader
 }
 
 // NewDecoder create decoder from io.Reader
 func NewDecoder(r io.Reader) Decoder {
-	return Decoder{r}
+	return Decoder{r: r}
 }
 
 // Decode decode data
@@ -35,7 +36,7 @@ func decode(r *bufio.Reader, v reflect.Value) error {
 	if v.Kind() != reflect.Ptr {
 		return errors.New("input value is not pointer")
 	}
-	ch, _, err := r.ReadRune()
+	ch, err := r.ReadByte()
 	if err != nil {
 		return err
 	}
@@ -50,9 +51,9 @@ func decode(r *bufio.Reader, v reflect.Value) error {
 }
 
 func decodeNumber(r *bufio.Reader, v reflect.Value) error {
-	var str []rune
+	var str []byte
 	for {
-		ch, _, err := r.ReadRune()
+		ch, err := r.ReadByte()
 		if err != nil {
 			return fmt.Errorf("decode number: %v", err)
 		}
@@ -85,7 +86,7 @@ func decodeNumber(r *bufio.Reader, v reflect.Value) error {
 func decodeDict(r *bufio.Reader, v reflect.Value) error {
 	key := reflect.New(reflect.TypeOf(""))
 	for {
-		ch, _, err := r.ReadRune()
+		ch, err := r.ReadByte()
 		if err != nil {
 			return fmt.Errorf("decode dict: %v", err)
 		}
@@ -96,7 +97,8 @@ func decodeDict(r *bufio.Reader, v reflect.Value) error {
 		if err != nil {
 			return err
 		}
-		ch, _, err = r.ReadRune()
+		ch, err = r.ReadByte()
+		fmt.Println("dict=", string(ch))
 		switch ch {
 		case 'i':
 			err = setDictNumber(r, key.Elem().String(), v)
@@ -111,26 +113,29 @@ func decodeDict(r *bufio.Reader, v reflect.Value) error {
 	}
 }
 
-func decodeString(r *bufio.Reader, v reflect.Value, ch rune) error {
-	var len []rune
+func decodeString(r *bufio.Reader, v reflect.Value, ch byte) error {
+	var len []byte
 	len = append(len, ch)
 	for {
-		ch, _, err := r.ReadRune()
+		ch, err := r.ReadByte()
 		if err != nil {
 			return fmt.Errorf("decode string: %v", err)
 		}
+		fmt.Printf("str=%x\n", ch)
 		if ch == ':' {
+			fmt.Println("size=", string(len))
 			size, err := strconv.ParseUint(string(len), 10, 64)
 			if err != nil {
 				return fmt.Errorf("can not parse string size: %s", string(len))
 			}
-			data := make([]rune, size)
+			data := make([]byte, size)
 			for i := 0; uint64(i) < size; i++ {
-				data[i], _, err = r.ReadRune()
+				data[i], err = r.ReadByte()
 				if err != nil {
 					return fmt.Errorf("decode string value: %v", err)
 				}
 			}
+			fmt.Println("data=", string(data))
 			switch v.Kind() {
 			case reflect.String:
 				v.SetString(string(data))
@@ -193,7 +198,7 @@ func setDictNumber(r *bufio.Reader, key string, v reflect.Value) error {
 	return nil
 }
 
-func setDictString(r *bufio.Reader, key string, v reflect.Value, ch rune) error {
+func setDictString(r *bufio.Reader, key string, v reflect.Value, ch byte) error {
 	t := v.Type()
 	for i := 0; i < t.NumField(); i++ {
 		kField := t.Field(i)
