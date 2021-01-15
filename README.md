@@ -2,7 +2,7 @@
 
 [![GoDoc](https://godoc.org/github.com/lwch/bencode?status.svg)](https://godoc.org/github.com/lwch/bencode)
 
-Bencode for [BitTorrent](http://www.bittorrent.org/beps/bep_0005.html) in golang, supported number, string and dict into go struct or map.
+Bencode for [BitTorrent](https://en.wikipedia.org/wiki/Bencode) in golang, supported number, string and dict into go struct or map.
 
 ## example
 
