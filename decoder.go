@@ -45,6 +45,15 @@ func decode(r *bufio.Reader, v reflect.Value) error {
 		if err != nil {
 			return err
 		}
+		v = v.Elem()
+		if v.Kind() == reflect.Interface {
+			if v.IsNil() {
+				v.Set(numberByType(n, reflect.TypeOf(0)))
+				return nil
+			}
+			v.Set(numberByType(n, v.Elem().Type()))
+			return nil
+		}
 		if n.isUnsigned {
 			v.Elem().SetUint(n.unsigned)
 		} else {
@@ -69,6 +78,13 @@ type number struct {
 func decodeNumber(r *bufio.Reader, v reflect.Value) (number, error) {
 	var ret number
 	var str []byte
+	if v.Kind() == reflect.Interface {
+		if v.IsNil() {
+			v = reflect.New(reflect.TypeOf(0)).Elem()
+		} else {
+			v = v.Elem()
+		}
+	}
 	for {
 		ch, err := r.ReadByte()
 		if err != nil {
@@ -129,8 +145,8 @@ func decodeDict(r *bufio.Reader, v reflect.Value) error {
 			err = setDictNumber(r, key.Elem().String(), v)
 		case 'd':
 			err = setDictDict(r, key.Elem().String(), v)
-		// case 'l':
-		// 	err = setDictList(r, key.Elem().String(), v)
+		case 'l':
+			err = setDictList(r, key.Elem().String(), v)
 		default:
 			err = setDictString(r, key.Elem().String(), v, ch)
 		}
@@ -230,7 +246,64 @@ func decodeList2Array(r *bufio.Reader, v reflect.Value) error {
 	return nil
 }
 
+func decodeList2Interface(r *bufio.Reader, v reflect.Value) error {
+	var t reflect.Type
+	if !v.IsNil() {
+		t = v.Elem().Type()
+	}
+	var slice reflect.Value
+	for {
+		ch, err := r.ReadByte()
+		if err != nil {
+			return fmt.Errorf("decode slice: %v", err)
+		}
+		if ch == 'e' {
+			break
+		}
+		var value reflect.Value
+		if t.Kind() != reflect.Invalid {
+			value = reflect.New(t)
+		}
+		switch ch {
+		case 'i':
+			if !value.IsValid() {
+				value = reflect.New(reflect.TypeOf(0))
+			}
+			n, err := decodeNumber(r, value)
+			if err != nil {
+				return err
+			}
+			if n.isUnsigned {
+				value.Elem().SetUint(n.unsigned)
+			} else {
+				value.Elem().SetInt(n.signed)
+			}
+		case 'd':
+			err = decodeDict(r, v.Elem())
+			if err != nil {
+				return err
+			}
+		case 'l':
+			err = decodeList(r, v.Elem())
+			if err != nil {
+				return err
+			}
+		default:
+			err = decodeString(r, v.Elem(), ch)
+			if err != nil {
+				return err
+			}
+		}
+		slice = reflect.Append(slice, v.Elem())
+	}
+	v.Set(slice)
+	return nil
+}
+
 func decodeList(r *bufio.Reader, v reflect.Value) error {
+	if v.Kind() == reflect.Interface {
+		return decodeList2Interface(r, v)
+	}
 	if v.Kind() == reflect.Slice {
 		return decodeList2Slice(r, v)
 	}
@@ -286,47 +359,6 @@ func decodeString(r *bufio.Reader, v reflect.Value, ch byte) error {
 		}
 		len = append(len, ch)
 	}
-}
-
-func setDictDict(r *bufio.Reader, key string, v reflect.Value) error {
-	run := func(v reflect.Value) (error, bool) {
-		t := v.Type()
-		for i := 0; i < t.NumField(); i++ {
-			kField := t.Field(i)
-			if kField.Tag.Get("bencode") == key {
-				return decodeDict(r, v.Field(i)), true
-			}
-		}
-		for i := 0; i < t.NumField(); i++ {
-			kField := t.Field(i)
-			if strings.ToLower(kField.Name) == key {
-				return decodeDict(r, v.Field(i)), true
-			}
-		}
-		return nil, false
-	}
-	t := v.Type()
-	for i := 0; i < t.NumField(); i++ {
-		kField := t.Field(i)
-		if kField.Anonymous {
-			vField := v.Field(i)
-			err, ok := run(vField)
-			if err != nil {
-				return err
-			}
-			if ok {
-				return err
-			}
-		}
-	}
-	err, ok := run(v)
-	if err != nil {
-		return err
-	}
-	if ok {
-		return err
-	}
-	return decodeDict(r, reflect.New(reflect.StructOf(nil)).Elem())
 }
 
 func numberByType(n number, t reflect.Type) reflect.Value {
@@ -451,4 +483,32 @@ func setDictString(r *bufio.Reader, key string, v reflect.Value, ch byte) error 
 	}
 	target := getDictTarget(v, key, reflect.TypeOf(""))
 	return decodeString(r, target, ch)
+}
+
+func setDictDict(r *bufio.Reader, key string, v reflect.Value) error {
+	if v.Kind() == reflect.Map {
+		target := getDictTarget(v, key, reflect.TypeOf(map[string]interface{}{}))
+		err := decodeDict(r, target)
+		if err != nil {
+			return err
+		}
+		v.SetMapIndex(reflect.ValueOf(key), target)
+		return nil
+	}
+	target := getDictTarget(v, key, reflect.TypeOf(map[string]interface{}{}))
+	return decodeDict(r, target)
+}
+
+func setDictList(r *bufio.Reader, key string, v reflect.Value) error {
+	if v.Kind() == reflect.Map {
+		target := getDictTarget(v, key, reflect.TypeOf([]interface{}{}))
+		err := decodeList(r, target)
+		if err != nil {
+			return err
+		}
+		v.SetMapIndex(reflect.ValueOf(key), target)
+		return nil
+	}
+	target := getDictTarget(v, key, reflect.TypeOf([]interface{}{}))
+	return decodeDict(r, target)
 }

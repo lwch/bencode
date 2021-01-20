@@ -2,6 +2,7 @@ package bencode
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
 )
 
@@ -157,4 +158,10 @@ func TestDecodeInherit(t *testing.T) {
 	if !bytes.Equal(r.Response.ID[:], id) {
 		t.Fatalf("unexpected value of r.id: %s", string(r.Response.ID[:]))
 	}
+}
+
+func TestDecodeInterface(t *testing.T) {
+	str := []byte("li1ee")
+	var i interface{}
+	fmt.Println(Decode(str, &i), i)
 }
