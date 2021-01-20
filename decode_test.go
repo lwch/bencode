@@ -55,6 +55,38 @@ func TestDecodeMap(t *testing.T) {
 	}
 }
 
+func TestDecodeList(t *testing.T) {
+	str := []byte("l1:a1:b1:ce")
+	var ss []string
+	err := Decode(str, &ss)
+	if err != nil {
+		t.Fatalf("FATAL: decode string slice: %v", err)
+	}
+	if len(ss) != 3 {
+		t.Fatalf("unexpected slice size: %d", len(ss))
+	}
+	if ss[0] != "a" {
+		t.Fatalf("unexpected slice value of 0: %s", ss[0])
+	}
+	if ss[1] != "b" {
+		t.Fatalf("unexpected slice value of 1: %s", ss[1])
+	}
+	if ss[2] != "c" {
+		t.Fatalf("unexpected slice value of 2: %s", ss[2])
+	}
+	var as [2]string
+	err = Decode(str, &as)
+	if err != nil {
+		t.Fatalf("FATAL: decode string array: %v", err)
+	}
+	if as[0] != "a" {
+		t.Fatalf("unexpected slice value of 0: %s", ss[0])
+	}
+	if as[1] != "b" {
+		t.Fatalf("unexpected slice value of 1: %s", ss[1])
+	}
+}
+
 func TestDecodeStruct(t *testing.T) {
 	// example of http://www.bittorrent.org/beps/bep_0005.html
 	str := []byte("d1:ad2:id20:abcdefghij0123456789e1:q4:ping1:t2:aa1:y1:qe")

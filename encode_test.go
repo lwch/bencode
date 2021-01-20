@@ -70,6 +70,52 @@ func TestEncodeString(t *testing.T) {
 	}
 }
 
+func TestEncodeByteArray(t *testing.T) {
+	var id [3]byte
+	copy(id[:], "abc")
+	data, err := Encode(id)
+	if err != nil {
+		t.Fatalf("FATAL: encode byte array: %v", err)
+	}
+	if !bytes.Equal(data, []byte("3:abc")) {
+		t.Fatal("unexpected byte array value")
+	}
+}
+
+func TestEncodeList(t *testing.T) {
+	listString := []string{"abc", "def", "efg"}
+	data, err := Encode(listString)
+	if err != nil {
+		t.Fatalf("FATAL: encode listString: %v", err)
+	}
+	target := "l3:abc3:def3:efge"
+	if !bytes.Equal(data, []byte(target)) {
+		t.Fatalf("unexpected listString: %s", string(data))
+	}
+	var a, b, c [3]byte
+	copy(a[:], "abc")
+	copy(b[:], "def")
+	copy(c[:], "efg")
+	listBytes := [][3]byte{
+		a, b, c,
+	}
+	data, err = Encode(listBytes)
+	if err != nil {
+		t.Fatalf("FATAL: encode listBytes: %v", err)
+	}
+	if !bytes.Equal(data, []byte(target)) {
+		t.Fatalf("unexpected listString: %s", string(data))
+	}
+	listInt := []int{1, 2, 3}
+	data, err = Encode(listInt)
+	if err != nil {
+		t.Fatalf("FATAL: encode listInt: %v", err)
+	}
+	if !bytes.Equal(data, []byte("li1ei2ei3ee")) {
+		t.Fatalf("unexpected listInt: %s", string(data))
+	}
+}
+
 func TestEncodeMap(t *testing.T) {
 	mp := map[string]interface{}{
 		"a": 1,
