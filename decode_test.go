@@ -88,37 +88,37 @@ func TestDecodeMap(t *testing.T) {
 
 func TestDecodeListString(t *testing.T) {
 	str := []byte("l1:a1:b1:ce")
-	// var ss []string
-	// err := Decode(str, &ss)
-	// if err != nil {
-	// 	t.Fatalf("FATAL: decode string slice: %v", err)
-	// }
-	// if len(ss) != 3 {
-	// 	t.Fatalf("unexpected slice size: %d", len(ss))
-	// }
-	// if ss[0] != "a" {
-	// 	t.Fatalf("unexpected slice value of 0: %s", ss[0])
-	// }
-	// if ss[1] != "b" {
-	// 	t.Fatalf("unexpected slice value of 1: %s", ss[1])
-	// }
-	// if ss[2] != "c" {
-	// 	t.Fatalf("unexpected slice value of 2: %s", ss[2])
-	// }
-	// var as [2]string
-	// err = Decode(str, &as)
-	// if err != nil {
-	// 	t.Fatalf("FATAL: decode string array: %v", err)
-	// }
-	// if as[0] != "a" {
-	// 	t.Fatalf("unexpected slice value of 0: %s", ss[0])
-	// }
-	// if as[1] != "b" {
-	// 	t.Fatalf("unexpected slice value of 1: %s", ss[1])
-	// }
+	var ss []string
+	err := Decode(str, &ss)
+	if err != nil {
+		t.Fatalf("FATAL: decode string slice: %v", err)
+	}
+	if len(ss) != 3 {
+		t.Fatalf("unexpected slice size: %d", len(ss))
+	}
+	if ss[0] != "a" {
+		t.Fatalf("unexpected slice value of 0: %s", ss[0])
+	}
+	if ss[1] != "b" {
+		t.Fatalf("unexpected slice value of 1: %s", ss[1])
+	}
+	if ss[2] != "c" {
+		t.Fatalf("unexpected slice value of 2: %s", ss[2])
+	}
+	var as [2]string
+	err = Decode(str, &as)
+	if err != nil {
+		t.Fatalf("FATAL: decode string array: %v", err)
+	}
+	if as[0] != "a" {
+		t.Fatalf("unexpected slice value of 0: %s", ss[0])
+	}
+	if as[1] != "b" {
+		t.Fatalf("unexpected slice value of 1: %s", ss[1])
+	}
 
 	var sbs [][]byte
-	err := Decode(str, &sbs)
+	err = Decode(str, &sbs)
 	if err != nil {
 		t.Fatalf("FATAL: decode bytes slice: %v", err)
 	}
