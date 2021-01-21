@@ -2,7 +2,6 @@ package bencode
 
 import (
 	"bytes"
-	"fmt"
 	"testing"
 )
 
@@ -15,6 +14,14 @@ func TestDecodeNumber(t *testing.T) {
 	}
 	if i != 1 {
 		t.Fatalf("unexpected number value: %d", i)
+	}
+	var intf interface{}
+	err = Decode(str, &intf)
+	if err != nil {
+		t.Fatalf("FATAL: decode number to interface: %v", err)
+	}
+	if intf != 1 {
+		t.Fatalf("unexpected number value of interface: %d", i)
 	}
 }
 
@@ -36,6 +43,14 @@ func TestDecodeString(t *testing.T) {
 	if !bytes.Equal(bs[:], []byte(s)) {
 		t.Fatalf("unexpected bytes value: %s", string(bs[:]))
 	}
+	var intf interface{}
+	err = Decode(str, &intf)
+	if err != nil {
+		t.Fatalf("FATAL: decode bytes to interface: %v", err)
+	}
+	if intf.(string) != s {
+		t.Fatalf("unexpected string value to interface: %s", string(bs[:]))
+	}
 }
 
 func TestDecodeMap(t *testing.T) {
@@ -54,37 +69,136 @@ func TestDecodeMap(t *testing.T) {
 	if m["b"] != "abc" {
 		t.Fatalf("unexpected key b of map: %s", m["b"])
 	}
+	var intf interface{}
+	err = Decode(str, &intf)
+	if err != nil {
+		t.Fatalf("FATAL: decode map to interface: %v", err)
+	}
+	m2 := intf.(map[string]interface{})
+	if len(m2) != 2 {
+		t.Fatalf("unexpected map size: %d", len(m2))
+	}
+	if m2["a"] != 1 {
+		t.Fatalf("unexpected key a of map to interface: %d", m2["a"])
+	}
+	if m2["b"] != "abc" {
+		t.Fatalf("unexpected key b of map to interface: %s", m2["b"])
+	}
 }
 
-func TestDecodeList(t *testing.T) {
+func TestDecodeListString(t *testing.T) {
 	str := []byte("l1:a1:b1:ce")
-	var ss []string
-	err := Decode(str, &ss)
+	// var ss []string
+	// err := Decode(str, &ss)
+	// if err != nil {
+	// 	t.Fatalf("FATAL: decode string slice: %v", err)
+	// }
+	// if len(ss) != 3 {
+	// 	t.Fatalf("unexpected slice size: %d", len(ss))
+	// }
+	// if ss[0] != "a" {
+	// 	t.Fatalf("unexpected slice value of 0: %s", ss[0])
+	// }
+	// if ss[1] != "b" {
+	// 	t.Fatalf("unexpected slice value of 1: %s", ss[1])
+	// }
+	// if ss[2] != "c" {
+	// 	t.Fatalf("unexpected slice value of 2: %s", ss[2])
+	// }
+	// var as [2]string
+	// err = Decode(str, &as)
+	// if err != nil {
+	// 	t.Fatalf("FATAL: decode string array: %v", err)
+	// }
+	// if as[0] != "a" {
+	// 	t.Fatalf("unexpected slice value of 0: %s", ss[0])
+	// }
+	// if as[1] != "b" {
+	// 	t.Fatalf("unexpected slice value of 1: %s", ss[1])
+	// }
+
+	var sbs [][]byte
+	err := Decode(str, &sbs)
 	if err != nil {
-		t.Fatalf("FATAL: decode string slice: %v", err)
+		t.Fatalf("FATAL: decode bytes slice: %v", err)
 	}
-	if len(ss) != 3 {
-		t.Fatalf("unexpected slice size: %d", len(ss))
+	if len(sbs) != 3 {
+		t.Fatalf("unexpected slice bytes size: %d", len(sbs))
 	}
-	if ss[0] != "a" {
-		t.Fatalf("unexpected slice value of 0: %s", ss[0])
+	if len(sbs[0]) != 1 || sbs[0][0] != 'a' {
+		t.Fatalf("unexpected slice bytes value of 0: %s", string(sbs[0]))
 	}
-	if ss[1] != "b" {
-		t.Fatalf("unexpected slice value of 1: %s", ss[1])
+	if len(sbs[1]) != 1 || sbs[1][0] != 'b' {
+		t.Fatalf("unexpected slice bytes value of 1: %s", string(sbs[1]))
 	}
-	if ss[2] != "c" {
-		t.Fatalf("unexpected slice value of 2: %s", ss[2])
+	if len(sbs[2]) != 1 || sbs[2][0] != 'c' {
+		t.Fatalf("unexpected slice bytes value of 2: %s", string(sbs[2]))
 	}
-	var as [2]string
-	err = Decode(str, &as)
+	var sba [2][1]byte
+	err = Decode(str, &sba)
 	if err != nil {
-		t.Fatalf("FATAL: decode string array: %v", err)
+		t.Fatalf("FATAL: decode bytes array: %v", err)
 	}
-	if as[0] != "a" {
-		t.Fatalf("unexpected slice value of 0: %s", ss[0])
+	if sba[0][0] != 'a' {
+		t.Fatalf("unexpected array byte array value of 0: %s", string(sba[0][:]))
 	}
-	if as[1] != "b" {
-		t.Fatalf("unexpected slice value of 1: %s", ss[1])
+	if sba[1][0] != 'b' {
+		t.Fatalf("unexpected array byte array value of 1: %s", string(sbs[0]))
+	}
+}
+
+func TestDecodeListInt(t *testing.T) {
+	str := []byte("li1ei2ei3ee")
+	var si []int
+	err := Decode(str, &si)
+	if err != nil {
+		t.Fatalf("FATAL: decode int slice: %v", err)
+	}
+	if len(si) != 3 {
+		t.Fatalf("unexpected number slice size: %d", len(si))
+	}
+	for i := 0; i < len(si); i++ {
+		if si[i] != i+1 {
+			t.Fatalf("unexpected number slice value of %d: %d", i, si[i])
+		}
+	}
+	var ai [2]int
+	err = Decode(str, &ai)
+	if err != nil {
+		t.Fatalf("FATAL: decode int array: %v", err)
+	}
+	for i := 0; i < len(ai); i++ {
+		if ai[i] != i+1 {
+			t.Fatalf("unexpected number array value of %d: %d", i, ai[i])
+		}
+	}
+
+	var sintf []interface{}
+	err = Decode(str, &sintf)
+	if err != nil {
+		t.Fatalf("FATAL: decode int interface slice: %v", err)
+	}
+	if len(sintf) != 3 {
+		t.Fatalf("unexpected interface slice size: %d", len(sintf))
+	}
+	for i := 0; i < len(sintf); i++ {
+		if sintf[i] != i+1 {
+			t.Fatalf("unexpected int interface slice value of %d: %d", i, ai[i])
+		}
+	}
+	var intf interface{}
+	err = Decode(str, &intf)
+	if err != nil {
+		t.Fatalf("FATAL: decode int interface slice: %v", err)
+	}
+	sintf = intf.([]interface{})
+	if len(sintf) != 3 {
+		t.Fatalf("unexpected interface slice size: %d", len(sintf))
+	}
+	for i := 0; i < len(sintf); i++ {
+		if sintf[i] != i+1 {
+			t.Fatalf("unexpected interface value of %d: %d", i, ai[i])
+		}
 	}
 }
 
@@ -158,10 +272,4 @@ func TestDecodeInherit(t *testing.T) {
 	if !bytes.Equal(r.Response.ID[:], id) {
 		t.Fatalf("unexpected value of r.id: %s", string(r.Response.ID[:]))
 	}
-}
-
-func TestDecodeInterface(t *testing.T) {
-	str := []byte("li1ee")
-	var i interface{}
-	fmt.Println(Decode(str, &i), i)
 }
