@@ -236,3 +236,14 @@ func TestEncodeInterface(t *testing.T) {
 		t.Fatal("value of key y not found")
 	}
 }
+
+func TestEncodeByte(t *testing.T) {
+	var b byte
+	data, err := Encode(b)
+	if err != nil {
+		t.Fatalf("FATAL: encode byte: %v", err)
+	}
+	if !bytes.Equal(data, []byte("i0e")) {
+		t.Fatalf("unexpected value: %s", string(data))
+	}
+}
