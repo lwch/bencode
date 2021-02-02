@@ -76,9 +76,11 @@ func parseNumber(r *bufio.Reader) (number, error) {
 			if err != nil {
 				return ret, fmt.Errorf("can not parse %s to signed number", string(str))
 			}
-			ret.unsigned, err = strconv.ParseUint(string(str), 10, 64)
-			if err != nil {
-				return ret, fmt.Errorf("can not parse %s to unsigned number", string(str))
+			if str[0] != '-' {
+				ret.unsigned, err = strconv.ParseUint(string(str), 10, 64)
+				if err != nil {
+					return ret, fmt.Errorf("can not parse %s to unsigned number", string(str))
+				}
 			}
 			return ret, nil
 		}
