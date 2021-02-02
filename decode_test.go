@@ -2,7 +2,6 @@ package bencode
 
 import (
 	"bytes"
-	"fmt"
 	"testing"
 )
 
@@ -307,14 +306,23 @@ func TestDecodeAnnounce(t *testing.T) {
 	}
 }
 
-func TestDecodeCustom(t *testing.T) {
-	data := []byte("d1:ai1eed1:bi3ee")
-	var m map[string]int
-	buf := bytes.NewBuffer(data)
-	err := NewDecoder(buf).Decode(&m)
+func TestDecodeListStruct(t *testing.T) {
+	data := []byte("ld1:ai1e1:bi2eed1:ai3e1:bi4eee")
+	var list []struct {
+		A int `bencode:"a"`
+		B int `bencode:"b"`
+	}
+	err := Decode(data, &list)
 	if err != nil {
 		t.Fatalf("FATAL: decode custom: %v", err)
 	}
-	fmt.Println(m)
-	fmt.Println(buf.String())
+	if len(list) != 2 {
+		t.Fatalf("unexpected length of list: %d", len(list))
+	}
+	if list[0].A != 1 || list[0].B != 2 {
+		t.Fatalf("unexpected value of list[0]: %d %d", list[0].A, list[0].B)
+	}
+	if list[1].A != 3 || list[1].B != 4 {
+		t.Fatalf("unexpected value of list[1]: %d %d", list[1].A, list[1].B)
+	}
 }
