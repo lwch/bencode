@@ -81,6 +81,8 @@ func parseNumber(r *bufio.Reader) (number, error) {
 				if err != nil {
 					return ret, fmt.Errorf("can not parse %s to unsigned number", string(str))
 				}
+			} else {
+				ret.unsigned = uint64(ret.signed)
 			}
 			return ret, nil
 		}
